@@ -1,50 +1,88 @@
 import urllib2
 from xmltodict import xmltodict
-from amazon.api import AmazonAPI
+from amazonproduct import API
+from xml.dom.minidom import parse, parseString
+import bottlenose
 
 class Amazon:
 
     amazonId = 'AKIAIXBPPRN2LXDFNBDQ'
     amazonAssoc = 'listify-20'
     secretKey = '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'
-    category = 'All';
-    query = 'starwars'
-    url = 'http://ecs.amazonaws.com/onca/xml?Service='\
-    + 'AWSECommerceService&IdType=ASIN&ResponseGroup=Large&SearchIndex='\
-    + category\
-    + '&Operation=ItemSearch&Keywords='\
-    + query\
-    + '&AWSAccessKeyId='\
-    + amazonId\
-    + '&AssociateTag='\
-    + amazonAssoc
-    # print url
-    amazonUrl = 'http://ecs.amazonaws.com/onca/xml?AWSAccessKeyId='\
-    + 'AKIAIXBPPRN2LXDFNBDQ&AssociateTag=listify-20&IdType=ASIN&Keywords='\
-    + query\
-    + '&Operation=ItemSearch&ResponseGroup=Large&SearchIndex='\
-    + category\
-    + '&Service=AWSECommerceService&Timestamp=2012-08-05T15%3A49%3A56.000Z'\
-    + '&Signature=7BRFKgK3Ro4XjtrzkRG712mq0OFRkafcVhox4%2BQ%2BK2k%3D'
-# print amazonUrl
-    amazonUrl = 'http://ecs.amazonaws.com/onca/xml?AWSAccessKeyId=AKIAIXBPPRN2LXDFNBDQ&AssociateTag=listify-20&IdType=ASIN&Keywords=vynil&Operation=ItemSearch&ResponseGroup=Large&SearchIndex=Music&Service=AWSECommerceService&Timestamp=2012-08-05T16%3A52%3A12.000Z&Signature=KU9rOWQB%2F2HbgNp2TGActQ2InQtdl9jItbGtNaxR0s0%3D'
 
-    def fetch(self):
-        self.api = AmazonAPI(self.amazonId, self.secretKey, self.amazonAssoc)
-        self.products = self.api.search(Keywords='My Bloody Valentine', SearchIndex='Music')
+    def __init__(self):
+        self.albums = []
 
-        # response = self.api.item_search('Music', Artist='My Bloody Valentine')
+    def fetch(self, artist):
 
-        # self.products = response
-        # req = urllib2.Request(self.amazonUrl)
-        # response = urllib2.urlopen(req)
-        # the_page = response.read()
-        # self.results = xmltodict(the_page)
-# print results['Items'][0]['Item'][0]['Title']
+        self.api = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc)
+        self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist)
+        self.offers = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="OfferFull")
+        dom = parseString(self.products)
+        i = 1
+        offerDom = parseString(self.offers)
+        prices = self.getPrices(offerDom)
+        self.addAlbums(dom, prices)
+        item_page = 0
 
-    def getArtist(self, index):
-        return self.results['Items'][0]['Item'][index]['ItemAttributes'][0]['Artist'][0]
+        while dom.getElementsByTagName('TotalPages').length > 0 and \
+        int(dom.getElementsByTagName('TotalPages')[0].firstChild.nodeValue) > (item_page + 1) and \
+        i < 10:
+            self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i)
+            self.offers = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i, ResponseGroup="OfferFull")
+            i = i + 1
+            dom = parseString(self.products)
+            offerDom = parseString(self.offers)
+            prices = self.getPrices(offerDom)
+            self.addAlbums(dom, prices)
+            item_page = int(dom.getElementsByTagName('ItemPage')[0].firstChild.nodeValue)
+
+    def addAlbums(self, dom, prices):
+        total_results = dom.getElementsByTagName("TotalResults")[0].firstChild.nodeValue
+        if int(total_results) > 0:
+            total_pages = dom.getElementsByTagName("TotalPages")[0].firstChild.nodeValue
+            item_page = 0
+            if dom.getElementsByTagName("ItemPage").length > 0:
+                item_page = dom.getElementsByTagName("ItemPage")[0].firstChild.nodeValue
+            batch_size = 10
+            if int(total_pages) == int(item_page) + 1:
+                batch_size = int(total_results) % 10
+
+            for i in range(batch_size):
+                album = {}
+                try:
+                    album['artist'] = self.getArtist(dom, i)
+                    album['album'] = self.getTitle(dom, i)
+                    album['ASIN'] = self.getASIN(dom, i)
+                    album['URL'] = self.getURL(dom, i)
+                    if album['ASIN'] in prices:
+                        album['price'] = prices[album['ASIN']]
+                    self.albums.append(album)
+                except:
+                    print 'error fetching an album' # this shouldn't ever ever happen
+
+    def getArtist(self, dom, index):
+        return dom.getElementsByTagName("Artist")[index].firstChild.nodeValue
+
+    def getTitle(self, dom, index):
+        return dom.getElementsByTagName("Title")[index].firstChild.nodeValue
+
+    def getASIN(self, dom, index):
+        return dom.getElementsByTagName("ASIN")[index].firstChild.nodeValue
+
+    def getURL(self, dom, index):
+        return dom.getElementsByTagName("URL")[index].firstChild.nodeValue
 
 
-    def getTitle(self, index):
-        return self.results['Items'][0]['Item'][index]['ItemAttributes'][0]['Title'][0]
+    def getPrices(self, dom):
+        albums = dom.getElementsByTagName('ASIN')
+        albumPrice = {}
+        for album in albums:
+            asin = album.firstChild.nodeValue
+            prices = album.parentNode.getElementsByTagName('LowestNewPrice')
+            if prices.length > 0:
+                price = prices[0].getElementsByTagName('Amount')[0].firstChild.nodeValue
+                albumPrice[asin] = price
+
+        return albumPrice
+
