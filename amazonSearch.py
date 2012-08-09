@@ -26,7 +26,7 @@ class Amazon:
             self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i, ResponseGroup="ItemAttributes,Images", MerchantId="Amazon")
             i = i + 1
             dom = parseString(self.products)
-            self.addAlbums(dom, prices)
+            self.addAlbums(dom)
             item_page = int(dom.getElementsByTagName('ItemPage')[0].firstChild.nodeValue)
 
     def addAlbums(self, dom):
@@ -39,7 +39,6 @@ class Amazon:
             batch_size = 10
             if int(total_pages) == int(item_page) + 1:
                 batch_size = int(total_results) % 10
-
             for i in range(batch_size):
                 album = {}
                 try:
@@ -54,7 +53,7 @@ class Amazon:
                         album['image'] = item['Image_M']
                         self.albums.append(album)
                 except:
-                    print 'error fetching an album' # this shouldn't ever ever happen
+                    print 'Not enought data to fetch this album' # this shouldn't ever ever happen
 
 
     def getItem(self, dom, index):
