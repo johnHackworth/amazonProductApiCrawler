@@ -14,9 +14,19 @@ class Amazon:
     def fetch(self, artist):
 
         self.api = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc)
+        self.apiEs = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc, None, None, '2011-08-01','ES')
+        self.apiUK = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc, None, None, '2011-08-01','UK')
+
         self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
+        self.productsEs = self.apiEs.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
+        self.productsUK = self.apiUK.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
         dom = parseString(self.products)
         self.addAlbums(dom)
+        dom = parseString(self.productsEs)
+        self.addAlbums(dom)
+        dom = parseString(self.productsUK)
+        self.addAlbums(dom)
+
         item_page = 0
 
         i = 1
