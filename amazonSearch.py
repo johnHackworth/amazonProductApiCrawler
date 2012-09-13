@@ -13,7 +13,7 @@ class Amazon:
         self.albums = []
 
     def fetch(self, artist):
-
+        self.albums = []
         self.api = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc)
         self.apiEs = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc, None, None, '2011-08-01','ES')
         self.apiUK = bottlenose.Amazon(self.amazonId, self.secretKey, self.amazonAssoc, None, None, '2011-08-01','UK')
@@ -43,7 +43,6 @@ class Amazon:
 
 
     def addAlbums(self, dom):
-        self.albums = []
         total_results = dom.getElementsByTagName("TotalResults")[0].firstChild.nodeValue
         if int(total_results) > 0:
             total_pages = dom.getElementsByTagName("TotalPages")[0].firstChild.nodeValue
@@ -57,7 +56,7 @@ class Amazon:
                 album = {}
                 try:
                     item = self.getItem(dom, i)
-                    if item['Binding'] == 'Vinyl':
+                    if item['Binding'] == 'Vinyl' or item['Binding'] == 'Disco de vinilo':
                         album['artist'] = item['Artist']
                         album['title'] = item['Title']
                         album['ASIN'] = item['ASIN']
@@ -82,7 +81,9 @@ class Amazon:
         itemData['Binding'] = item.getElementsByTagName("Binding")[0].firstChild.nodeValue
         itemData['Price'] = item.getElementsByTagName("OfferListing")[0].\
         getElementsByTagName("Amount")[0].firstChild.nodeValue
-        itemData['CurrencyCode'] = item.getElementByTagName("CurrencyCode")[0].firstChild.nodeValue
+        itemData['CurrencyCode'] = item.getElementsByTagName("OfferListing")[0].\
+        getElementsByTagName("CurrencyCode")[0].firstChild.nodeValue
+
         itemData['Availability'] = item.getElementsByTagName("AvailabilityType")[0].firstChild.nodeValue
 
         try:
