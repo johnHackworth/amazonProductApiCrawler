@@ -2,6 +2,7 @@ from xml.dom.minidom import parse, parseString
 from settings import amazon_id, amazon_assoc, secret_key
 import bottlenose
 
+
 class Amazon:
 
     amazonId = amazon_id
@@ -20,24 +21,26 @@ class Amazon:
         self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
         self.productsEs = self.apiEs.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
         self.productsUK = self.apiUK.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
-        dom = parseString(self.products)
-        self.addAlbums(dom)
-        dom = parseString(self.productsEs)
-        self.addAlbums(dom)
-        dom = parseString(self.productsUK)
-        self.addAlbums(dom)
 
+        self.processProducts(artist, self.products)
+        self.processProducts(artist, self.productsEs)
+        self.processProducts(artist, self.productsUK)
+
+    def processProducts(self, artist , products):
+        dom = parseString(products)
+        self.addAlbums(dom)
         item_page = 0
 
         i = 1
         while dom.getElementsByTagName('TotalPages').length > 0 and \
         int(dom.getElementsByTagName('TotalPages')[0].firstChild.nodeValue) > (item_page + 1) and \
         i < 10:
-            self.products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
+            products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
             i = i + 1
-            dom = parseString(self.products)
+            dom = parseString(products)
             self.addAlbums(dom)
             item_page = int(dom.getElementsByTagName('ItemPage')[0].firstChild.nodeValue)
+
 
     def addAlbums(self, dom):
         self.albums = []
@@ -63,6 +66,7 @@ class Amazon:
                         album['thumbnail'] = item['Image_S']
                         album['image'] = item['Image_M']
                         album['availability'] = item['Availability']
+                        album['currency'] = item['CurrencyCode']
                         self.albums.append(album)
                 except:
                     print 'Not enought data to fetch this album' # this shouldn't ever ever happen
@@ -78,6 +82,7 @@ class Amazon:
         itemData['Binding'] = item.getElementsByTagName("Binding")[0].firstChild.nodeValue
         itemData['Price'] = item.getElementsByTagName("OfferListing")[0].\
         getElementsByTagName("Amount")[0].firstChild.nodeValue
+        itemData['CurrencyCode'] = item.getElementByTagName("CurrencyCode")[0].firstChild.nodeValue
         itemData['Availability'] = item.getElementsByTagName("AvailabilityType")[0].firstChild.nodeValue
 
         try:
