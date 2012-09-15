@@ -22,13 +22,13 @@ class Amazon:
         self.productsEs = self.apiEs.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
         self.productsUK = self.apiUK.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
 
-        self.processProducts(artist, self.products)
-        self.processProducts(artist, self.productsEs)
-        self.processProducts(artist, self.productsUK)
+        self.processProducts(artist, self.products, 'com')
+        self.processProducts(artist, self.productsEs, 'es')
+        self.processProducts(artist, self.productsUK, 'co.uk')
 
-    def processProducts(self, artist , products):
+    def processProducts(self, artist , products, source):
         dom = parseString(products)
-        self.addAlbums(dom)
+        self.addAlbums(dom, source)
         item_page = 0
 
         i = 1
@@ -38,11 +38,11 @@ class Amazon:
             products = self.api.ItemSearch(SearchIndex='Music', Keywords='vinyl', Artist=artist, ItemPage=i, ResponseGroup="ItemAttributes,Images,Offers", MerchantId="Amazon")
             i = i + 1
             dom = parseString(products)
-            self.addAlbums(dom)
+            self.addAlbums(dom, source)
             item_page = int(dom.getElementsByTagName('ItemPage')[0].firstChild.nodeValue)
 
 
-    def addAlbums(self, dom):
+    def addAlbums(self, dom, source):
         total_results = dom.getElementsByTagName("TotalResults")[0].firstChild.nodeValue
         if int(total_results) > 0:
             total_pages = dom.getElementsByTagName("TotalPages")[0].firstChild.nodeValue
@@ -66,6 +66,7 @@ class Amazon:
                         album['image'] = item['Image_M']
                         album['availability'] = item['Availability']
                         album['currency'] = item['CurrencyCode']
+                        album['source'] = source
                         self.albums.append(album)
                 except:
                     print 'Not enought data to fetch this album' # this shouldn't ever ever happen
