@@ -52,11 +52,13 @@ class Amazon:
                 batch_size = int(total_results) % 10
             for i in range(batch_size):
                 album = {}
+
                 item = ''
                 # print 'dom '+source+': '+str(i) + ' of ' + str(batch_size)
                 try:
                     item = self.getItem(dom, i)
-                    if item['Binding'] == 'Vinyl' or item['Binding'] == 'Disco de vinilo':
+                    if item is not None and 'binding' in item and (item['Binding'] == 'Vinyl' \
+                        or item['Binding'] == 'Disco de vinilo'):
                         album['artist'] = item['Artist']
                         album['title'] = item['Title']
                         album['ASIN'] = item['ASIN']
@@ -84,39 +86,42 @@ class Amazon:
         try:
             item = dom.getElementsByTagName("Item")[index]
             itemData = {}
-            itemData['Artist'] = item.getElementsByTagName("Artist")[0].firstChild.nodeValue
-            debug = 1
-            itemData['Title'] = item.getElementsByTagName("Title")[0].firstChild.nodeValue
-            debug = 2
-            itemData['ASIN'] = item.getElementsByTagName("ASIN")[0].firstChild.nodeValue
-            debug = 3
-            itemData['URL'] = item.getElementsByTagName("DetailPageURL")[0].firstChild.nodeValue
-            debug = 4
-            itemData['Binding'] = item.getElementsByTagName("Binding")[0].firstChild.nodeValue
-            debug = 5
-            itemData['Price'] = item.getElementsByTagName("OfferListing")[0].\
-            getElementsByTagName("Amount")[0].firstChild.nodeValue
-            debug = 6
-            itemData['CurrencyCode'] = item.getElementsByTagName("OfferListing")[0].\
-            getElementsByTagName("CurrencyCode")[0].firstChild.nodeValue
-            debug = 7
-            itemData['Availability'] = item.getElementsByTagName("AvailabilityType")[0].firstChild.nodeValue
-            debug = 8
-            try:
-                itemData['Image_S'] = item.getElementsByTagName("SmallImage")[0].\
-                getElementsByTagName('URL')[0].firstChild.nodeValue
-                debug = 9
-            except:
-                itemData['Image_S'] = None
-                debug = 10
-            try:
-                itemData['Image_M'] = item.getElementsByTagName("MediumImage")[0].\
-                getElementsByTagName('URL')[0].firstChild.nodeValue
-                debug = 11
-            except:
-                itemData['Image_M'] = None
-                debug = 12
-            # itemData['Image'] = item.getElementsByTagName("Image")[0].firstChild.nodeValue
+            if len(item.getElementsByTagName("Artist")) == 0:
+                itemData = None
+            else:
+                itemData['Artist'] = item.getElementsByTagName("Artist")[0].firstChild.nodeValue
+                debug = 1
+                itemData['Title'] = item.getElementsByTagName("Title")[0].firstChild.nodeValue
+                debug = 2
+                itemData['ASIN'] = item.getElementsByTagName("ASIN")[0].firstChild.nodeValue
+                debug = 3
+                itemData['URL'] = item.getElementsByTagName("DetailPageURL")[0].firstChild.nodeValue
+                debug = 4
+                itemData['Binding'] = item.getElementsByTagName("Binding")[0].firstChild.nodeValue
+                debug = 5
+                itemData['Price'] = item.getElementsByTagName("OfferListing")[0].\
+                getElementsByTagName("Amount")[0].firstChild.nodeValue
+                debug = 6
+                itemData['CurrencyCode'] = item.getElementsByTagName("OfferListing")[0].\
+                getElementsByTagName("CurrencyCode")[0].firstChild.nodeValue
+                debug = 7
+                itemData['Availability'] = item.getElementsByTagName("AvailabilityType")[0].firstChild.nodeValue
+                debug = 8
+                try:
+                    itemData['Image_S'] = item.getElementsByTagName("SmallImage")[0].\
+                    getElementsByTagName('URL')[0].firstChild.nodeValue
+                    debug = 9
+                except:
+                    itemData['Image_S'] = None
+                    debug = 10
+                try:
+                    itemData['Image_M'] = item.getElementsByTagName("MediumImage")[0].\
+                    getElementsByTagName('URL')[0].firstChild.nodeValue
+                    debug = 11
+                except:
+                    itemData['Image_M'] = None
+                    debug = 12
+                # itemData['Image'] = item.getElementsByTagName("Image")[0].firstChild.nodeValue
         except:
             print debug
         return itemData
