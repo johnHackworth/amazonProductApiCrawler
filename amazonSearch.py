@@ -57,13 +57,14 @@ class Amazon:
                 # print 'dom '+source+': '+str(i) + ' of ' + str(batch_size)
                 try:
                     item = self.getItem(dom, i)
-                    if item is not None and 'binding' in item and (item['Binding'] == 'Vinyl' \
+                    if item is not None and 'Binding' in item and (item['Binding'] == 'Vinyl' \
                     or item['Binding'] == 'Disco de vinilo'):
                         album['artist'] = item['Artist']
                         album['title'] = item['Title']
                         album['ASIN'] = item['ASIN']
                         album['URL'] = item['URL']
                         album['price'] = item['Price']
+                        album['format'] = item['Format']
                         try:
                             album['thumbnail'] = item['Image_S']
                         except:
@@ -120,6 +121,7 @@ class Amazon:
                 except:
                     itemData['Image_S'] = None
                     debug = 10
+
                 try:
                     itemData['Image_M'] = item.getElementsByTagName("MediumImage")[0].\
                     getElementsByTagName('URL')[0].firstChild.nodeValue
@@ -127,6 +129,12 @@ class Amazon:
                 except:
                     itemData['Image_M'] = None
                     debug = 12
+                try:
+                    itemData['Format'] = item.getElementsByTagName("Format")[0].firstChild.nodeValue
+                    debug = 9
+                except:
+                    itemData['Format'] = ''
+                    debug = 10
                 # itemData['Image'] = item.getElementsByTagName("Image")[0].firstChild.nodeValue
         except:
             print debug
