@@ -86,7 +86,14 @@ class Amazon:
         try:
             item = dom.getElementsByTagName("Item")[index]
             itemData = {}
-            if len(item.getElementsByTagName("Artist")) == 0:
+            if len(item.getElementsByTagName("Artist")) == 0 or \
+            len(item.getElementsByTagName("Title")) == 0 or \
+            len(item.getElementsByTagName("ASIN")) == 0 or \
+            len(item.getElementsByTagName("DetailPageURL")) == 0 or \
+            len(item.getElementsByTagName("Binding")) == 0 or \
+            len(item.getElementsByTagName("OfferListing")) == 0 or \
+            len(item.getElementsByTagName("Availability")) == 0 or \
+            len(item.getElementsByTagName("Amount")) == 0:
                 itemData = None
             else:
                 itemData['Artist'] = item.getElementsByTagName("Artist")[0].firstChild.nodeValue
