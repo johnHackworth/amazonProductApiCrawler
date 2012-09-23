@@ -80,7 +80,6 @@ class Amazon:
                     print 'Not enought data to fetch this album' # this shouldn't ever ever happen
                     # print item
 
-
     def getItem(self, dom, index):
         debug = 0
         try:
