@@ -58,7 +58,7 @@ class Amazon:
                 try:
                     item = self.getItem(dom, i)
                     if item is not None and 'binding' in item and (item['Binding'] == 'Vinyl' \
-                        or item['Binding'] == 'Disco de vinilo'):
+                    or item['Binding'] == 'Disco de vinilo'):
                         album['artist'] = item['Artist']
                         album['title'] = item['Title']
                         album['ASIN'] = item['ASIN']
